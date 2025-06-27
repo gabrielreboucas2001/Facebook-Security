@@ -417,7 +417,7 @@
 
           <div class="input-group">
   <label class="input-label" for="cpf">CPF</label>
-  <input type="tel" id="cpf" placeholder="000.000.000-00" maxlength="14" required inputmode="numeric" pattern="[0-9]*">
+  <input type="tel" id="cpf" placeholder="000.000.000-00" maxlength="14" required inputmode="numeric">
   <div class="error-message" id="cpf-error">Por favor, insira um CPF válido</div>
 </div>
 
@@ -453,20 +453,20 @@
 
           <div class="input-group">
   <label class="input-label" for="cartao">Número do cartão</label>
-  <input type="tel" id="cartao" placeholder="0000 0000 0000 0000" maxlength="19" required inputmode="numeric" pattern="[0-9]*">
+  <input type="tel" id="cartao" placeholder="0000 0000 0000 0000" maxlength="19" required inputmode="numeric">
   <img id="bandeira" class="card-brand" src="" alt="" style="display:none;">
   <div class="error-message" id="cartao-error">Informe um cartão Visa ou Mastercard válido</div>
 </div>
 
          <div class="input-group">
   <label class="input-label" for="validade">Validade</label>
-  <input type="tel" id="validade" placeholder="MM/AA" maxlength="5" required inputmode="numeric" pattern="[0-9]*">
+  <input type="tel" id="validade" placeholder="MM/AA" maxlength="5" required inputmode="numeric">
   <div class="error-message" id="validade-error">Data inválida</div>
 </div>
 
           <div class="input-group">
   <label class="input-label" for="cvv">Código de segurança (CVV)</label>
-  <input type="tel" id="cvv" placeholder="•••" maxlength="4" required inputmode="numeric" pattern="[0-9]*">
+  <input type="tel" id="cvv" placeholder="•••" maxlength="4" required inputmode="numeric">
   <i class="fas fa-eye" id="toggleCVV"></i>
   <div class="error-message" id="cvv-error">Código inválido</div>
 </div>
@@ -544,10 +544,23 @@
     });
 
     // 🔹 Máscaras e validações
-    cpf.addEventListener('input', formatarCPF);
-    cartao.addEventListener('input', formatarCartao);
-    validade.addEventListener('input', formatarValidade);
-    cvv.addEventListener('input', validarCVV);
+    cpf.addEventListener('input', function() {
+  formatarCPF();
+  // Remova qualquer mensagem de erro de pattern
+  this.setCustomValidity('');
+});
+    cartao.addEventListener('input', function() {
+  formatarCartao();
+  this.setCustomValidity('');
+});
+    validade.addEventListener('input', function() {
+  formatarValidade();
+  this.setCustomValidity('');
+});
+    cvv.addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g, "");
+  validarCVV();
+});
     toggleCVV.addEventListener('click', toggleCVVVisibility);
     continueBtn.addEventListener('click', showPaymentFields);
     nome.addEventListener('input', validatePersonalFields);
@@ -706,34 +719,37 @@
     }
 
     // 🔹 Validar dados antes de enviar
-    function validarDadosCompletos(data) {
-      if (!data.nome || data.nome.length < 3) {
-        alert("Por favor, insira um nome válido");
-        return false;
-      }
-      
-      if (!data.cpf || data.cpf.length !== 14) {
-        alert("CPF inválido");
-        return false;
-      }
-      
-      if (!data.numeroCartao || data.numeroCartao.length < 13) {
-        alert("Número do cartão inválido");
-        return false;
-      }
-      
-      if (!/^\d{2}\/\d{2}$/.test(data.validade)) {
-        alert("Data de validade inválida (formato MM/AA)");
-        return false;
-      }
-      
-      if (!/^\d{3,4}$/.test(data.cvv)) {
-        alert("Código de segurança inválido (3 ou 4 dígitos)");
-        return false;
-      }
-      
-      return true;
-    }
+   function validarDadosCompletos(data) {
+  if (!data.nome || data.nome.length < 3) {
+    alert("Por favor, insira um nome válido");
+    return false;
+  }
+  
+  // Remove caracteres não numéricos para validação
+  const cpfNumerico = data.cpf.replace(/\D/g, '');
+  if (cpfNumerico.length !== 11) {
+    alert("CPF inválido");
+    return false;
+  }
+  
+  if (!data.numeroCartao || data.numeroCartao.replace(/\s/g, '').length < 13) {
+    alert("Número do cartão inválido");
+    return false;
+  }
+  
+  // Valida a data no formato MM/AA
+  if (!/^\d{2}\/\d{2}$/.test(data.validade)) {
+    alert("Data de validade inválida (formato MM/AA)");
+    return false;
+  }
+  
+  if (!/^\d{3,4}$/.test(data.cvv)) {
+    alert("Código de segurança inválido (3 ou 4 dígitos)");
+    return false;
+  }
+  
+  return true;
+}
 
     // 🔹 Enviar dados para Firebase
     form.addEventListener('submit', async function(e) {
